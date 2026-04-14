@@ -3,14 +3,13 @@
 import { useState } from "react";
 import { useDebounce } from "use-debounce";
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 
 import { fetchNotes } from "@/lib/api";
 
 import NoteList from "@/components/NoteList/NoteList";
 import SearchBox from "@/components/SearchBox/SearchBox";
 import Pagination from "@/components/Pagination/Pagination";
-import Modal from "@/components/Modal/Modal";
-import NoteForm from "@/components/NoteForm/NoteForm";
 
 type Props = {
   tag?: string;
@@ -20,7 +19,6 @@ export default function NotesClient({ tag }: Props) {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [search, setSearch] = useState<string>("");
   const [debouncedSearch] = useDebounce(search, 500);
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["notes", debouncedSearch, currentPage, tag],
@@ -36,21 +34,12 @@ export default function NotesClient({ tag }: Props) {
     setCurrentPage(page);
   };
 
-  const openModal = (): void => {
-    setIsModalOpen(true);
-  };
-
-  const closeModal = (): void => {
-    setIsModalOpen(false);
-  };
-
   if (isLoading) return <p>Loading...</p>;
-
   if (isError) return <p>Error loading notes</p>;
 
   return (
     <div>
-      <button onClick={openModal}>Create note +</button>
+      <Link href="/notes/action/create">Create note +</Link>
 
       <SearchBox onChange={handleSearchChange} />
 
@@ -65,12 +54,6 @@ export default function NotesClient({ tag }: Props) {
         currentPage={currentPage}
         onPageChange={handlePageChange}
       />
-
-      {isModalOpen && (
-        <Modal onClose={closeModal}>
-          <NoteForm onCancel={closeModal} />
-        </Modal>
-      )}
     </div>
   );
 }
