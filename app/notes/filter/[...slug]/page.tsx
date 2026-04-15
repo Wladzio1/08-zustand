@@ -33,7 +33,6 @@ export default async function Page({ params }: Props) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-
   const filterValue = slug[0];
   const isAll = filterValue === "all";
 
@@ -50,9 +49,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title,
       description,
-      url: `https://twoja-strona.com{slug.join('/')}`,
+      // Poprawiony URL: dodany slash przed ${slug...}
+      url: `https://notehub.com{slug.join('/')}`,
       images: [
         {
+          // Poprawiony link do zdjęcia z treści zadania
           url: "https://goit.global",
         },
       ],

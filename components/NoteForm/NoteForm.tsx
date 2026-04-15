@@ -1,60 +1,94 @@
 "use client";
 
-import { useState } from "react";
-import { useDebounce } from "use-debounce";
-import { useQuery } from "@tanstack/react-query";
-import Link from "next/link";
+import css from "./NoteForm.module.css";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createNote } from "@/lib/api";
+import { useRouter } from "next/navigation";
+import { useNoteStore } from "@/lib/store/noteStore";
 
-import { fetchNotes } from "@/lib/api";
+export default function NoteForm() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const { draft, setDraft, clearDraft } = useNoteStore();
 
-import NoteList from "@/components/NoteList/NoteList";
-import SearchBox from "@/components/SearchBox/SearchBox";
-import Pagination from "@/components/Pagination/Pagination";
-
-type Props = {
-  tag?: string;
-};
-
-export default function NotesClient({ tag }: Props) {
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [search, setSearch] = useState<string>("");
-  const [debouncedSearch] = useDebounce(search, 500);
-
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["notes", debouncedSearch, currentPage, tag],
-    queryFn: () => fetchNotes(currentPage, 12, debouncedSearch, tag),
+  const mutation = useMutation({
+    mutationFn: createNote,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
+      clearDraft();
+      router.push("/notes/filter/all");
+    },
   });
 
-  const handleSearchChange = (value: string): void => {
-    setSearch(value);
-    setCurrentPage(1);
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
+  ) => {
+    setDraft({ [e.target.name]: e.target.value });
   };
 
-  const handlePageChange = (page: number): void => {
-    setCurrentPage(page);
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    mutation.mutate(draft);
   };
-
-  if (isLoading) return <p>Loading...</p>;
-
-  if (isError) return <p>Error loading notes</p>;
 
   return (
-    <div>
-      <Link href="/notes/action/create">Create note +</Link>
+    <form className={css.form} onSubmit={handleSubmit}>
+      <div className={css.formGroup}>
+        <label>Title</label>
+        <input
+          name="title"
+          className={css.input}
+          value={draft.title}
+          onChange={handleChange}
+          required
+        />
+      </div>
 
-      <SearchBox onChange={handleSearchChange} />
+      <div className={css.formGroup}>
+        <label>Content</label>
+        <textarea
+          name="content"
+          className={css.textarea}
+          value={draft.content}
+          onChange={handleChange}
+        />
+      </div>
 
-      {data?.notes?.length ? (
-        <NoteList notes={data.notes} />
-      ) : (
-        <p>No notes found</p>
-      )}
+      <div className={css.formGroup}>
+        <label>Tag</label>
+        <select
+          name="tag"
+          className={css.select}
+          value={draft.tag}
+          onChange={handleChange}
+        >
+          <option value="Todo">Todo</option>
+          <option value="Work">Work</option>
+          <option value="Personal">Personal</option>
+          <option value="Meeting">Meeting</option>
+          <option value="Shopping">Shopping</option>
+        </select>
+      </div>
 
-      <Pagination
-        pageCount={data?.totalPages ?? 1}
-        currentPage={currentPage}
-        onPageChange={handlePageChange}
-      />
-    </div>
+      <div className={css.actions}>
+        <button
+          type="button"
+          className={css.cancelButton}
+          onClick={() => router.back()}
+        >
+          Cancel
+        </button>
+
+        <button
+          type="submit"
+          className={css.submitButton}
+          disabled={mutation.isPending}
+        >
+          {mutation.isPending ? "Creating..." : "Create note"}
+        </button>
+      </div>
+    </form>
   );
 }
