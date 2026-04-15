@@ -49,11 +49,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title,
       description,
-      // Poprawiony URL: dodany slash przed ${slug...}
       url: `https://notehub.com{slug.join('/')}`,
       images: [
         {
-          // Poprawiony link do zdjęcia z treści zadania
           url: "https://goit.global",
         },
       ],
