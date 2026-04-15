@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     url: "https://notehub.com/notes/action/create",
     images: [
       {
-        url: "https://goit.global",
+        url: "https://ac.goit.global/fullstack/react/notehub-og-meta.jpg",
       },
     ],
   },
